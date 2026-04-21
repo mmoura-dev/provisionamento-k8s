@@ -24,3 +24,5 @@ src: https://kubernetes.io/docs/tasks/tools/#kubectl
 ## [Opcional] Instalando k9s
 https://github.com/derailed/k9s/releases/tag/v0.50.18
 
+## Comando de teste do cluster
+kubectl --kubeconfig shared/k3s.yaml -o wide get nodes
