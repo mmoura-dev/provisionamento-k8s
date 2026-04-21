@@ -12,3 +12,12 @@ src: https://developer.hashicorp.com/vagrant/install
 
 ## Instalando Virtualbox
 https://www.virtualbox.org/wiki/Linux_Downloads
+
+## Instalando kubectl
+Windows
+```posh
+winget install -e --id Kubernetes.kubectl
+https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#install-nonstandard-package-tools
+```
+src: https://kubernetes.io/docs/tasks/tools/#kubectl
+
