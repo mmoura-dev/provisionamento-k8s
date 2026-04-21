@@ -21,3 +21,6 @@ https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#install-nonstand
 ```
 src: https://kubernetes.io/docs/tasks/tools/#kubectl
 
+## [Opcional] Instalando k9s
+https://github.com/derailed/k9s/releases/tag/v0.50.18
+
