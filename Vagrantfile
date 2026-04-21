@@ -1,77 +1,72 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
-Vagrant.configure("2") do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
+server_ip = "192.168.56.10"
 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://vagrantcloud.com/search.
+agents = { "k3s-agent-1" => "192.168.56.15",
+           "k3s-agent-2" => "192.168.56.16" }
+
+server_script = <<-SHELL
+
+  export INSTALL_K3S_EXEC="--bind-address=#{server_ip} --node-ip=#{server_ip} --node-external-ip=#{server_ip}"
+
+  curl -sfL https://get.k3s.io | sh -
+
+  echo "Waiting for k3s server to be ready..."
+  sleep 20
+
+  # Share token and kubeconfig
+  sudo mkdir -p /vagrant_shared
+  sudo cp /var/lib/rancher/k3s/server/node-token /vagrant_shared/token
+  sudo cp /etc/rancher/k3s/k3s.yaml /vagrant_shared/k3s.yaml
+  sudo chmod 644 /vagrant_shared/*
+SHELL
+
+# Agent provisioning script
+agent_script = <<-SHELL
+  echo "Waiting for server token..."
+  while [ ! -f /vagrant_shared/token ]; do
+    sleep 5
+  done
+
+  TOKEN=$(cat /vagrant_shared/token)
+
+  export K3S_URL="https://#{server_ip}:6443"
+  export K3S_TOKEN="$TOKEN"
+
+  curl -sfL https://get.k3s.io | sh -
+SHELL
+
+Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
+  # Control-plane node
+  config.vm.define "k3s-cp-1", primary: true do |server|
+    server.vm.network "private_network", ip: server_ip
+    server.vm.synced_folder "./shared", "/vagrant_shared"
+    server.vm.hostname = "k3s-cp-1"
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # NOTE: This will enable public access to the opened port
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+    server.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine and only allow access
-  # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+    server.vm.provision "shell", inline: server_script
+  end
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+  # Agent nodes
+  agents.each do |agent_name, agent_ip|
+    config.vm.define agent_name do |agent|
+      agent.vm.network "private_network", ip: agent_ip
+      agent.vm.synced_folder "./shared", "/vagrant_shared"
+      agent.vm.hostname = agent_name
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
+      agent.vm.provider "virtualbox" do |vb|
+        vb.memory = "2048"
+        vb.cpus = "1"
+      end
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
-
-  # Disable the default share of the current code directory. Doing this
-  # provides improved isolation between the vagrant box and your host
-  # by making sure your Vagrantfile isn't accessible to the vagrant box.
-  # If you use this you may want to enable additional shared subfolders as
-  # shown above.
-  # config.vm.synced_folder ".", "/vagrant", disabled: true
-
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
-
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
-  # SHELL
+      agent.vm.provision "shell", inline: agent_script
+    end
+  end
 end
