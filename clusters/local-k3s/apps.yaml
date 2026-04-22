@@ -10,5 +10,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/my-cluster
+  path: ./apps/local-k3s
   prune: true
