@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-service-1
+  namespace: service-1
+spec:
+  selector:
+    matchLabels:
+      app: service-1
+  jwtRules:
+    - issuer: "https://auth.example.com"
+      jwksUri: "https://auth.example.com/.well-known/jwks.json"
+      # em ambiente de teste, substitua jwksUri por jwks com a chave inline:
+      # jwks: '{"keys":[{...}]}'

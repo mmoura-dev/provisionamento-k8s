@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-3
+  namespace: service-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-3
+  template:
+    metadata:
+      labels:
+        app: service-3
+    spec:
+      automountServiceAccountToken: false
+      serviceAccountName: service-3
+      containers:
+        - name: httpbin
+          image: kennethreitz/httpbin@sha256:b138b9264903f46a43e1c750e07dc06f5d2a1bd5d51f37fb185bc608f61090dd
+          ports:
+            - containerPort: 80

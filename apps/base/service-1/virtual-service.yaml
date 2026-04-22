@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: service-1
+  namespace: service-1
+spec:
+  hosts:
+    - "service-1.example.com"
+    - service-1.service-1.svc.cluster.local
+  gateways:
+    - service-1-gateway
+    - mesh
+  http:
+    # tráfego em /proxy/** é encaminhado ao service-2
+    - match:
+        - uri:
+            prefix: /proxy
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: service-2.service-2.svc.cluster.local
+            port:
+              number: 80
+    # demais rotas ficam no próprio service-1
+    - route:
+        - destination:
+            host: service-1.service-1.svc.cluster.local
+            port:
+              number: 80

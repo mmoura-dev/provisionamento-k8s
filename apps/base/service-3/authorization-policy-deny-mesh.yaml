@@ -1,0 +1,16 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-mesh-services
+  namespace: service-3
+spec:
+  selector:
+    matchLabels:
+      app: service-3
+  action: DENY
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/service-1/sa/service-1"
+              - "cluster.local/ns/service-2/sa/service-2"

@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt-service-1
+  namespace: service-1
+spec:
+  selector:
+    matchLabels:
+      app: service-1
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["https://auth.example.com/*"]

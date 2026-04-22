@@ -1,4 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - httpbin/
+  - service-1/
+  - service-2/
+  - service-3/
