@@ -4,7 +4,7 @@ metadata:
   name: service-3
   namespace: service-3
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: service-3
   ports:
