@@ -26,3 +26,43 @@ https://github.com/derailed/k9s/releases/tag/v0.50.18
 
 ## Comando de teste do cluster
 kubectl --kubeconfig shared/k3s.yaml -o wide get nodes
+
+## Download do binário do fluxcd
+https://github.com/fluxcd/flux2/releases/tag/v2.8.6
+
+## Configuração do fluxcd com repositório no GitHub
+https://fluxcd.io/flux/installation/bootstrap/github/
+
+Fork the repo, create a [GitHub fine-grained PAT](https://fluxcd.io/flux/installation/bootstrap/github/#github-pat), create the env below with it:
+`export GITHUB_TOKEN=<gh-token>`
+
+Run the bootstrap:
+```
+flux bootstrap github \
+  --token-auth \
+  --owner=my-github-username \
+  --repository=my-repository-name \
+  --branch=main \
+  --path=clusters/my-cluster \
+  --personal
+```
+Exemplo:
+`flux bootstrap github --token-auth --owner=mmoura-dev --repository=provisionamento-k8s --branch=main --path=clusters/local-k3s --personal`
+
+Debug network:
+`kubectl run test-net --rm -it --image=busybox -- sh`
+
+Flux repository structure as monorepo:
+```
+├── apps
+│   ├── base
+│   ├── production 
+│   └── staging
+├── infrastructure
+│   ├── base
+│   ├── production 
+│   └── staging
+└── clusters
+    ├── production
+    └── staging
+```
