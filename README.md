@@ -66,3 +66,7 @@ Flux repository structure as monorepo:
     ├── production
     └── staging
 ```
+
+
+## Instalação do Istio
+Tudo feito no tenant infrastructure do flux.
