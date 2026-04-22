@@ -17,6 +17,6 @@ spec:
       serviceAccountName: service-3
       containers:
         - name: httpbin
-          image: kennethreitz/httpbin@sha256:b138b9264903f46a43e1c750e07dc06f5d2a1bd5d51f37fb185bc608f61090dd
+          image: kennethreitz/httpbin:latest
           ports:
             - containerPort: 80
