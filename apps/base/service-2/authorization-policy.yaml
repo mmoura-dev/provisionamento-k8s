@@ -6,7 +6,4 @@ metadata:
 spec:
   action: ALLOW
   rules:
-    - from:
-        - source:
-            principals:
-              - "cluster.local/ns/service-1/sa/service-1"
+  - {}
