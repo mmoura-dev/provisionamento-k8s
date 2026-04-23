@@ -19,7 +19,7 @@ spec:
         uri: /
       route:
         - destination:
-            host: service-2.service-2.svc.cluster.local
+            host: service-2-nginx.service-2.svc.cluster.local
             port:
               number: 80
     # demais rotas ficam no próprio service-1
