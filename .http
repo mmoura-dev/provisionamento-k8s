@@ -64,7 +64,7 @@ Authorization: Bearer {{token}}
 
 ### [service-1 → service-2] ✅ Proxy /proxy/get com JWT — esperado: 200 OK (resposta do service-2/whoami)
 # @name s1_proxy_to_s2
-GET http://{{gatewayIp}}/proxy/get HTTP/1.1
+GET http://{{gatewayIp}}/proxy/ HTTP/1.1
 Host: service-1.example.com
 Authorization: Bearer {{token}}
 
@@ -72,7 +72,7 @@ Authorization: Bearer {{token}}
 
 ### [service-1 → service-2] ❌ Proxy sem JWT — esperado: 403 Forbidden (bloqueado no service-1)
 # @name s1_proxy_no_jwt
-GET http://{{gatewayIp}}/proxy/get HTTP/1.1
+GET http://{{gatewayIp}}/proxy/ HTTP/1.1
 Host: service-1.example.com
 
 ###
