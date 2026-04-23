@@ -4,6 +4,9 @@ metadata:
   name: allow-service-1-only
   namespace: service-2
 spec:
+  selector:
+    matchLabels:
+      app: service-2
   action: ALLOW
   rules:
   - {}
