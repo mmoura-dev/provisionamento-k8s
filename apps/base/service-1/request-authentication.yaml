@@ -8,7 +8,7 @@ spec:
     matchLabels:
       app: service-1
   jwtRules:
-    - issuer: "https://auth.example.com"
-      jwksUri: "https://auth.example.com/.well-known/jwks.json"
+    - issuer: "https://desafio-devops-pleno.rio"
+      # jwksUri: "https://auth.example.com/.well-known/jwks.json"
       # em ambiente de teste, substitua jwksUri por jwks com a chave inline:
-      # jwks: '{"keys":[{...}]}'
+      jwks: '{"keys":[{"use":"sig","kty":"EC","kid":"test-key","crv":"P-256","alg":"ES256","x":"QckJa_UL9_Sl1MlNg9cagdZE4eM9JQi-fOVWtSaOxPw","y":"zFzX1llnCp7Y_S7Sj9_RnT86_q5PyvnyPgxTw4lOgXA"}]}'

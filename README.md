@@ -15,7 +15,7 @@ https://www.virtualbox.org/wiki/Linux_Downloads
 
 ## Instalando kubectl
 Windows
-```posh
+```pwsh
 winget install -e --id Kubernetes.kubectl
 https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#install-nonstandard-package-tools
 ```
@@ -209,3 +209,38 @@ spec:
       hosts:
         - "service-1.example.com"
 ```
+
+
+## Instalação step
+Windows: `winget install Smallstep.step`
+src: https://smallstep.com/docs/step-cli/installation
+
+## Gerando JWKS
+`step crypto jwk create jwk.pub.json jwk.json --kty EC --crv P-256 --use sig --alg ES256 --kid test-key`
+Se escolher encriptar a chave privada com senha, anote ela para conseguir gerar JWTs.
+
+Transforme o arquivo jwk.pub.json para o formato comprimido:
+```pwsh
+$jwk = Get-Content jwk.pub.json -Raw | ConvertFrom-Json
+$jwks = @{ keys = @($jwk) } | ConvertTo-Json -Compress
+$jwks
+```
+ou
+```bash
+cat <<EOF > jwks.json
+{
+  "keys": [
+    $(cat jwk.pub.json)
+  ]
+}
+EOF
+JWKS=$(cat jwks.json | jq -c .)
+echo $JWKS
+```
+Substitua as `jwks` nos arquivos `request-authentication.yaml` do service-1 e service-3.
+
+### Como gerar um JWT usando o step
+`step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --sub "user123" --kid test-key --subtle`
+
+> Escolhas como JWKS inline e a flag --subtle na geração de JWTs foram feitas para simplificar a demonstração e não seriam escolhas feitas em ambientes não voláteis.
+> Além disso, podemos versionar os segredos dentro de zip com senha para faciliar a demonstração.
