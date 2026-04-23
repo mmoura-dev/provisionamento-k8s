@@ -11,4 +11,4 @@ spec:
   rules:
     - from:
         - source:
-            requestPrincipals: ["https://desafio-devops-pleno.rio"]
+            requestPrincipals: ["https://desafio-devops-pleno.rio/*"]
