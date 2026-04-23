@@ -1,3 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-1-nginx-config
+  namespace: service-1
+data:
+  nginx.conf: |
+    events {}
+    http {
+      server {
+        listen 80;
+
+        location /proxy/ {
+          proxy_pass http://service-2-nginx.service-2.svc.cluster.local/;
+        }
+
+        location / {
+          return 200 "service-1 ok\n";
+        }
+      }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,10 +35,17 @@ spec:
       labels:
         app: service-1
     spec:
-      automountServiceAccountToken: false
       serviceAccountName: service-1
       containers:
-        - name: httpbin
-          image: kennethreitz/httpbin:latest
-          ports:
-            - containerPort: 80
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      volumes:
+      - name: config
+        configMap:
+          name: service-1-nginx-config
