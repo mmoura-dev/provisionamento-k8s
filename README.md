@@ -70,3 +70,84 @@ Flux repository structure as monorepo:
 
 ## Instalação do Istio
 Tudo feito no tenant infrastructure do flux.
+
+## Conceitos do Istio
+
+### PeerAuthtentication
+PeerAuthentication determines whether or not mTLS is allowed or required for connections to an Envoy proxy sidecar.
+
+Example: Policy to require mTLS traffic for all workloads under namespace foo.
+```yaml
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: foo
+spec:
+  mtls:
+    mode: STRICT
+```
+
+Mode values:
+```
+UNSET	-> Inherit from parent, if has one. Otherwise treated as PERMISSIVE
+DISABLE	-> Connection is not tunneled
+PERMISSIVE -> Connection can be either plaintext or mTLS tunnel
+STRICT -> Connection is an mTLS tunnel (TLS with client cert must be presented)
+```
+
+### Automatic sidecar injection
+Sidecars can be automatically added to applicable Kubernetes pods using a mutating webhook admission controller provided by Istio.
+When you set the `istio-injection=enabled` label on a namespace and the injection webhook is enabled, any new pods that are created in that namespace will automatically have a sidecar added to them.
+
+<table><thead><tr><th>Resource</th><th>Label</th><th>Enabled value</th><th>Disabled value</th></tr></thead><tbody><tr><td>Namespace</td><td><code>istio-injection</code></td><td><code>enabled</code></td><td><code>disabled</code></td></tr><tr><td>Pod</td><td><code>sidecar.istio.io/inject</code></td><td><code>"true"</code></td><td><code>"false"</code></td></tr></tbody></table>
+
+### VirtualService and DestinationRule
+A VirtualService defines a set of traffic routing rules to apply when a host is addressed. Each routing rule defines matching criteria for traffic of a specific protocol. If the traffic is matched, then it is sent to a named destination service (or subset/version of it) defined in the registry.
+
+The following example on Kubernetes, routes all HTTP traffic by default to pods of the reviews service with label “version: v1”. In addition, HTTP requests with path starting with /wpcatalog/ or /consumercatalog/ will be rewritten to /newcatalog and sent to pods with label “version: v2”.
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: reviews-route
+spec:
+  hosts:
+  - reviews.prod.svc.cluster.local
+  http:
+  - name: "reviews-v2-routes"
+    match:
+    - uri:
+        prefix: "/wpcatalog"
+    - uri:
+        prefix: "/consumercatalog"
+    rewrite:
+      uri: "/newcatalog"
+    route:
+    - destination:
+        host: reviews.prod.svc.cluster.local
+        subset: v2
+  - name: "reviews-v1-route"
+    route:
+    - destination:
+        host: reviews.prod.svc.cluster.local
+        subset: v1
+```
+
+A subset/version of a route destination is identified with a reference to a named service subset which must be declared in a corresponding DestinationRule.
+Destination indicates the network addressable service to which the request/connection will be sent after processing a routing rule.
+```yaml
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews.prod.svc.cluster.local
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
