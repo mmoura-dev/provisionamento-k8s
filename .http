@@ -1,0 +1,151 @@
+# =============================================================================
+# Istio Services — REST Client Tests
+# =============================================================================
+# Pré-requisito: instale a extensão "REST Client" no VSCode (humao.rest-client)
+#
+# Antes de rodar: ajuste as variáveis abaixo com os valores do seu cluster
+# kubectl get svc istio-ingressgateway -n istio-system
+# =============================================================================
+
+@gatewayIp = 192.168.56.10
+@token = {{$dotenv JWT_TOKEN}}
+
+# Para setar o token sem .env, substitua a linha acima por:
+# @token = eyJhbGciOiJSUzI1NiIsI...
+
+# Para obter o token de teste do Istio, rode no terminal:
+# $token = Invoke-RestMethod "https://raw.githubusercontent.com/istio/istio/release-1.26/security/tools/jwt/samples/demo.jwt"
+
+
+# =============================================================================
+# SERVICE-1
+# =============================================================================
+
+### [service-1] ✅ GET com JWT válido — esperado: 200 OK
+# @name s1_with_jwt
+GET http://{{gatewayIp}}/get HTTP/1.1
+Host: service-1.example.com
+Authorization: Bearer {{token}}
+
+###
+
+### [service-1] ❌ GET sem JWT — esperado: 403 Forbidden
+# @name s1_no_jwt
+GET http://{{gatewayIp}}/get HTTP/1.1
+Host: service-1.example.com
+
+###
+
+### [service-1] ✅ POST com JWT válido — esperado: 200 OK
+# @name s1_post_with_jwt
+POST http://{{gatewayIp}}/post HTTP/1.1
+Host: service-1.example.com
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "test": "service-1 post"
+}
+
+###
+
+### [service-1] ✅ Headers visíveis com JWT — esperado: 200 OK com dump dos headers
+# @name s1_headers
+GET http://{{gatewayIp}}/headers HTTP/1.1
+Host: service-1.example.com
+Authorization: Bearer {{token}}
+
+###
+
+
+# =============================================================================
+# SERVICE-1 → SERVICE-2 (proxy interno via VirtualService)
+# =============================================================================
+
+### [service-1 → service-2] ✅ Proxy /proxy/get com JWT — esperado: 200 OK (resposta do service-2/whoami)
+# @name s1_proxy_to_s2
+GET http://{{gatewayIp}}/proxy/get HTTP/1.1
+Host: service-1.example.com
+Authorization: Bearer {{token}}
+
+###
+
+### [service-1 → service-2] ❌ Proxy sem JWT — esperado: 403 Forbidden (bloqueado no service-1)
+# @name s1_proxy_no_jwt
+GET http://{{gatewayIp}}/proxy/get HTTP/1.1
+Host: service-1.example.com
+
+###
+
+
+# =============================================================================
+# SERVICE-2 (acesso direto externo — deve falhar)
+# =============================================================================
+
+### [service-2] ❌ Acesso direto com host correto — esperado: 404 (sem rota no gateway)
+# @name s2_direct_external
+GET http://{{gatewayIp}}/get HTTP/1.1
+Host: service-2.example.com
+Authorization: Bearer {{token}}
+
+###
+
+### [service-2] ❌ Acesso direto sem host — esperado: 404 (sem rota no gateway)
+# @name s2_no_host
+GET http://{{gatewayIp}}/get HTTP/1.1
+Authorization: Bearer {{token}}
+
+###
+
+
+# =============================================================================
+# SERVICE-3
+# =============================================================================
+
+### [service-3] ✅ GET com JWT válido — esperado: 200 OK
+# @name s3_with_jwt
+GET http://{{gatewayIp}}/get HTTP/1.1
+Host: service-3.example.com
+Authorization: Bearer {{token}}
+
+###
+
+### [service-3] ❌ GET sem JWT — esperado: 403 Forbidden
+# @name s3_no_jwt
+GET http://{{gatewayIp}}/get HTTP/1.1
+Host: service-3.example.com
+
+###
+
+### [service-3] ✅ POST com JWT válido — esperado: 200 OK
+# @name s3_post_with_jwt
+POST http://{{gatewayIp}}/post HTTP/1.1
+Host: service-3.example.com
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "test": "service-3 post"
+}
+
+###
+
+
+# =============================================================================
+# MATRIZ DE ISOLAMENTO (rodar via kubectl exec — não via REST Client)
+# =============================================================================
+# Os testes abaixo não podem ser feitos pelo REST Client pois exigem acesso
+# interno à malha. Cole os comandos no terminal:
+#
+# --- service-2 direto de pod sem identidade (deve retornar RBAC: access denied)
+# kubectl run curl --image=curlimages/curl -it --rm -n default \
+#   -- curl -sv http://service-2.service-2.svc.cluster.local/
+#
+# --- service-1 tentando acessar service-3 (deve retornar RBAC: access denied)
+# kubectl exec -n service-1 deploy/service-1 -c httpbin -- \
+#   curl -sv http://service-3.service-3.svc.cluster.local/get
+#
+# --- service-2 tentando acessar service-3 (deve retornar RBAC: access denied)
+# kubectl exec -n service-2 deploy/service-2 -- \
+#   curl -sv http://service-3.service-3.svc.cluster.local/get
+# =============================================================================
