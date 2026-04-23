@@ -151,3 +151,61 @@ spec:
     labels:
       version: v2
 ```
+
+### RequestAuthentication and AuthorizationPolicy
+RequestAuthentication defines what request authentication methods are supported by a workload. It will reject a request if the request contains invalid authentication information, based on the configured authentication rules.
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: httpbin
+  namespace: foo
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+```
+
+A request that does not contain any authentication credentials will be accepted but will not have any authenticated identity. To restrict access to authenticated requests only, this should be accompanied by an authorization rule.
+Require JWT for all request for workloads that have label `app:httpbin`:
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin
+  namespace: foo
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
+```
+
+### Gateway
+Gateway describes a load balancer operating at the edge of the mesh receiving incoming or outgoing HTTP/TCP connections.
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: service-1-gateway
+  namespace: service-1
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "service-1.example.com"
+```
