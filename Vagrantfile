@@ -48,8 +48,8 @@ Vagrant.configure("2") do |config|
     server.vm.hostname = "k3s-cp-1"
 
     server.vm.provider "virtualbox" do |vb|
-      vb.memory = "2048"
-      vb.cpus = "2"
+      vb.memory = "4096"
+      vb.cpus = "3"
     end
 
     server.vm.provision "shell", inline: server_script
