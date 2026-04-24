@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: service-3-scaler
+  namespace: service-3
+spec:
+  scaleTargetRef:
+    name: service-3
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+        metricName: istio_requests_total
+        query: sum(rate(istio_requests_total{app="service-3"}[1m]))
+        threshold: "1"
