@@ -244,3 +244,10 @@ Substitua as `jwks` nos arquivos `request-authentication.yaml` do service-1 e se
 
 > Escolhas como JWKS inline e a flag --subtle na geração de JWTs foram feitas para simplificar a demonstração e não seriam escolhas feitas em ambientes não voláteis.
 > Além disso, podemos versionar os segredos dentro de zip com senha para faciliar a demonstração.
+
+
+## Instalando k6
+https://grafana.com/docs/k6/latest/set-up/install-k6/?pg=get&plcmt=selfmanaged-box10-cta1
+
+## Usando k6
+`JWT_TOKEN=seu_token k6 run test.js`
