@@ -26,6 +26,11 @@ spec:
         # permite que o Prometheus descubra ServiceMonitors de qualquer namespace
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
+        additionalScrapeConfigsSecret:
+          enabled: true
+          name: "istio-scrape-configs"
+          key: "scrape-configs.yaml"
+
 
     grafana:
       enabled: true
