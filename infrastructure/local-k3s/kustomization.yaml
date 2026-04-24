@@ -6,3 +6,4 @@ resources:
   - ../base/keda
 patches:
   - path: istio-patch.yaml
+  - path: prometheus-clusterrole-patch.yaml
