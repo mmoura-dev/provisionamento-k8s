@@ -11,3 +11,4 @@ resources:
   - request-authentication.yaml
   - authorization-policy-jwt.yaml
   - authorization-policy-deny-mesh.yaml
+  - scaled-object.yaml
