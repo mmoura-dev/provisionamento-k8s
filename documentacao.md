@@ -128,23 +128,11 @@ Instale as seguintes ferramentas na sua máquina:
 * [FluxCD v2.8.6](https://fluxcd.io/flux/installation/)
 * [step-cli 0.30.2](https://smallstep.com/docs/step-cli/installation) — para gerar chaves e tokens JWT
 * [k6 v1.7.1](https://grafana.com/docs/k6/latest/set-up/install-k6/)
-* *(Opcional)* [k9s v0.50.18](https://k9scli.io/topics/install/) — TUI para inspecionar o cluster
-* *(Opcional)* [Extensão "REST Client" no VSCode (humao.rest-client)](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
-
-#### Passo 0: Fork do repositório
-Optei pelo uso da ferramenta de GitOps FluxCD integrada com um repositório público no GitHub, como 
-forma de demonstrar meu conhecimento da abordagem. Entretanto, um implicação dessa escolha é a 
-necessidade de GitHub PAT para que o FluxCD rodando dentro do cluster realize um commit no 
-repositório durante sua etapa de bootstrap. Isso leva a necessidade de quem está performando esses
-passos de ser dono do repositório, para assim ser capaz de gerar um GitHub PAT com permissão de 
-escrita.
-
-> [Faça um fork do repositório aqui!](https://github.com/mmoura-dev/provisionamento-k8s/fork)
 
 #### Passo 1: Clone o repositório localmente
 ```bash
-git clone https://github.com/{SEU_USUARIO}/{SEU_REPOSITORIO}.git
-cd {SEU_REPOSITORIO}
+git clone https://github.com/mmoura-dev/provisionamento-k8s.git
+cd provisionamento-k8s
 ```
 
 #### Passo 2: Provisionamento dos nós
@@ -199,14 +187,6 @@ flux-system   infrastructure   12m   True    Applied revision: main@sha1:a4bd0f9
 ```
 
 Fim! O FluxCD se encarrega de instalar todo o resto. O próximo passo é a validação dos requisitos.
-
-##### 🐶 k9s
-Por ser mais fácil, a partir desse ponto recomendo que a visualização do cluster seja feita usando o
-k9s.
-
-```bash
-k9s --kubeconfig shared/k3s.yaml
-```
 
 ### Comandos de validação de cada critério de avaliação
 
