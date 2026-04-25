@@ -117,6 +117,97 @@ step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --s
 
 ### Passo a passo reproduzível do zero (assumindo máquina limpa)
 
+#### Antes de começar
+
+Instale as seguintes ferramentas na sua máquina:
+
+* [Git 2.53.0](https://git-scm.com/install/)
+* [Vagrant 2.4.9](https://developer.hashicorp.com/vagrant/install)
+* [VirtualBox 7.2.6](https://www.virtualbox.org/wiki/Downloads)
+* [kubectl v1.35.4](https://kubernetes.io/docs/tasks/tools/#kubectl)
+* [FluxCD v2.8.6](https://fluxcd.io/flux/installation/)
+* [step-cli 0.30.2](https://smallstep.com/docs/step-cli/installation) — para gerar chaves e tokens JWT
+* [k6 v1.7.1](https://grafana.com/docs/k6/latest/set-up/install-k6/)
+* *(Opcional)* [k9s v0.50.18](https://k9scli.io/topics/install/) — TUI para inspecionar o cluster
+* *(Opcional)* [Extensão "REST Client" no VSCode (humao.rest-client)](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+
+#### Passo 0: Fork do repositório
+Optei pelo uso da ferramenta de GitOps FluxCD integrada com um repositório público no GitHub, como 
+forma de demonstrar meu conhecimento da abordagem. Entretanto, um implicação dessa escolha é a 
+necessidade de GitHub PAT para que o FluxCD rodando dentro do cluster realize um commit no 
+repositório durante sua etapa de bootstrap. Isso leva a necessidade de quem está performando esses
+passos de ser dono do repositório, para assim ser capaz de gerar um GitHub PAT com permissão de 
+escrita.
+
+> [Faça um fork do repositório aqui!](https://github.com/mmoura-dev/provisionamento-k8s/fork)
+
+#### Passo 1: Clone o repositório localmente
+```bash
+git clone https://github.com/{SEU_USUARIO}/{SEU_REPOSITORIO}.git
+cd {SEU_REPOSITORIO}
+```
+
+#### Passo 2: Provisionamento dos nós
+Nessa etapa o Vagrant se encarrega de subir as máquinas virtuais no VirtualBox e instalar o k3s nelas.
+
+```bash
+vagrant up
+```
+
+Valide que os nós foram provisionados corretamente com o seguinte comando:
+```bash
+kubectl --kubeconfig shared/k3s.yaml -o wide get nodes
+```
+
+Exemplo de saída esperada:
+```bash
+NAME          STATUS   ROLES           AGE     VERSION
+k3s-agent-1   Ready    <none>          2m7s    v1.34.6+k3s1
+k3s-agent-2   Ready    <none>          75s     v1.34.6+k3s1
+k3s-cp-1      Ready    control-plane   3m16s   v1.34.6+k3s1
+```
+
+#### Passo 3: Inicialização do FluxCD no cluster
+Crie a variável de ambiente stub abaixo para que o comando de bootstrap não trave.
+
+Windows:
+```pwsh
+$GITHUB_TOKEN="stub"
+```
+
+Linux:
+```bash
+export GITHUB_TOKEN="stub"
+```
+
+Execute o bootstrap do FluxCD:
+```bash
+flux bootstrap github --token-auth --owner=mmoura-dev --repository=provisionamento-k8s --branch=main --path=clusters/local-k3s --personal --kubeconfig=shared/k3s.yaml
+```
+
+Valide o bootstrap do FluxCD com o comando abaixo:
+```bash
+kubectl get kustomizations.kustomize.toolkit.fluxcd.io -A --kubeconfig=shared/k3s.yaml
+```
+
+Exemplo de saída esperada:
+```bash
+NAMESPACE     NAME             AGE   READY   STATUS
+flux-system   apps             12m   True    Applied revision: main@sha1:a4bd0f955e3e8bc67a88e6819624e641ece49ca7
+flux-system   flux-system      13m   True    Applied revision: main@sha1:a4bd0f955e3e8bc67a88e6819624e641ece49ca7
+flux-system   infrastructure   12m   True    Applied revision: main@sha1:a4bd0f955e3e8bc67a88e6819624e641ece49ca7
+```
+
+Fim! O FluxCD se encarrega de instalar todo o resto. O próximo passo é a validação dos requisitos.
+
+##### 🐶 k9s
+Por ser mais fácil, a partir desse ponto recomendo que a visualização do cluster seja feita usando o
+k9s.
+
+```bash
+k9s --kubeconfig shared/k3s.yaml
+```
+
 ### Comandos de validação de cada critério de avaliação
 | Critério                                                                                        | Peso  |
 | ----------------------------------------------------------------------------------------------- | ----- |
@@ -142,8 +233,44 @@ step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --s
 | JWKS inline no `RequestAuthentication` | Elimina dependência de servidor de identidade externo, adequado para ambiente volátil. |
 | `httpbin` e `nginx` para os serviços   | Acatei o `httpbin` por simplicidade, mas também precisei usar o `nginx` para fazer o proxy entre o serviço 1 e 2 com mTLS e porque ele tem um helm chart popular para atender o requisito de serviço 2. |
 | `ServiceAccount` nomeada por serviço   | Necessária para `source.principals` únicos. |
+| GitOps usando Fluxcd                   | Vejo GitOps como o estado da arte para administração de clusters Kubernetes, portanto optei demonstrar meu conhecimento utilizando a ferramenta que domino.|
 
 ### Descrição da métrica escolhida para o autoscaling
 O script do k6 utilizado é o `k6.js`, presente na raiz do repositório e pode ser utilizado para
 forçar o scale-up do serviço 3 com o seguinte comando `JWT_TOKEN=seu_token k6 run test.js`
 ([como gerar o token](#como-gerar-o-token-jwt)).
+
+
+### Estrutura de um monorepositório FluxCD
+```
+├── apps
+│   ├── base
+│   ├── production 
+│   └── staging
+├── infrastructure
+│   ├── base
+│   ├── production 
+│   └── staging
+└── clusters
+    ├── production
+    └── staging
+```
+
+- A pasta clusters deve haver uma pasta para cada cluster controlado pelo repositório e dentro da
+pasta de cada cluster tem as configurações do FluxCD nele e a definição de quais *inquilinos* devem
+ser aplicados.
+
+- *Inquilinos* é como o FluxCD se refere a um conjunto de aplicações e suas configurações agrupados
+em uma pasta, neste repositório temos dois *inquilinos*, a pasta `apps` e a pasta `infrastructure`.
+
+- A pasta `infrastructure` é uma convenção, um *inquilino* para serviços auxiliares do cluster, os
+quais normalmente são gerenciados pelos administradores do cluster. Neste repositório é onde estão
+definidos o Istio, Keda e Prometheus/Grafana.
+
+- A pasta `apps` é onde defini os serviços 1, 2 e 3, os quais são a principal carga de trabalho do
+cluster.
+
+> A estrutura de uma pasta *inquilina* também segue uma convenção, onde definimos uma pasta `base`
+> para tudo aquilo que será comum e uma outra pasta
+> para cada cluster onde o inquilino é aplicado. De tal modo que a pasta específica para o cluster
+> seja aplicada como uma camada acima da pasta `base`, dessa forma ela é capaz de sobrescrever configurações e atender qualquer especificidade daquele ambiente.
