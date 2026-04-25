@@ -32,11 +32,11 @@ necessário, mas como tinha os recursos disponíveis, optei por não gastar mais
 
 #### Namespaces e Serviços
 Nesse ponto apenas segui o especificado, três serviços, cada um no seu namespace.
-| Serviço   | Namespace   | Exposição    | JWT | mTLS | AuthorizationPolicy                                                                                                  |
-|-----------|-------------|--------------|-----|------|----------------------------------------------------------------------------------------------------------------------|
-| service-1 | `service-1` | LoadBalancer | ✅ | ✅   | Permite apenas JWTs issued por `https://desafio-devops-pleno.rio/*`                                                  |
-| service-2 | `service-2` | ClusterIP    | ❌ | ✅   | Permite apenas mTLS do `service-1` via `source.principals`                                                           |
-| service-3 | `service-3` | LoadBalancer | ✅ | ✅   | Bloqueia o tráfego dos outros serviços, mas permite tráfego com JWTs issued por `https://desafio-devops-pleno.rio/*` |
+| Serviço   | Namespace   | Exposição    | AuthorizationPolicy                                                                                                  |
+|-----------|-------------|--------------|----------------------------------------------------------------------------------------------------------------------|
+| service-1 | `service-1` | LoadBalancer | Permite apenas JWTs issued por `https://desafio-devops-pleno.rio/*`                                                  |
+| service-2 | `service-2` | ClusterIP    | Permite apenas mTLS do `service-1` via `source.principals`                                                           |
+| service-3 | `service-3` | LoadBalancer | Bloqueia o tráfego dos outros serviços, mas permite tráfego com JWTs issued por `https://desafio-devops-pleno.rio/*` |
 
 
 #### Fluxo de Tráfego
