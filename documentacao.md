@@ -209,19 +209,33 @@ k9s --kubeconfig shared/k3s.yaml
 ```
 
 ### Comandos de validação de cada critério de avaliação
-| Critério                                                                                        | Peso  |
-| ----------------------------------------------------------------------------------------------- | ----- |
-| Cluster funcional com os 3 nós em estado `Ready`                                                | Alto  |
-| `PeerAuthentication` em modo `STRICT` nos três namespaces                                       | Alto  |
-| `VirtualService` e `DestinationRule` configurados corretamente                                  | Alto  |
-| `service-1` acessível externamente com JWT e roteando para `service-2` via mTLS                 | Alto  |
-| `service-2` acessível apenas pelo `service-1` via `AuthorizationPolicy` com `source.principals` | Alto  |
-| `service-3` acessível externamente com JWT e isolado de outros serviços da malha                | Alto  |
-| Três cenários de JWT demonstrados para cada serviço externo                                     | Alto  |
-| Reprodutibilidade: conseguimos replicar do zero seguindo o README                               | Alto  |
-| Qualidade e clareza da documentação (arquitetura, namespaces, políticas de identidade)          | Alto  |
-| Justificativa das escolhas técnicas                                                             | Médio |
-| Organização do repositório                                                                      | Médio |
+
+> Se estiver usando o VSCode, os testes xtensão "REST Client" no VSCode (humao.rest-client)
+
+#### Cluster funcional com os 3 nós em estado `Ready`
+Valide que os nós foram provisionados corretamente com o seguinte comando:
+```bash
+kubectl --kubeconfig shared/k3s.yaml -o wide get nodes
+```
+
+Exemplo de saída esperada:
+```bash
+NAME          STATUS   ROLES           AGE     VERSION
+k3s-agent-1   Ready    <none>          2m7s    v1.34.6+k3s1
+k3s-agent-2   Ready    <none>          75s     v1.34.6+k3s1
+k3s-cp-1      Ready    control-plane   3m16s   v1.34.6+k3s1
+```
+
+#### `service-1` acessível externamente com JWT e roteando para `service-2` via mTLS
+
+
+#### `service-2` acessível apenas pelo `service-1` via `AuthorizationPolicy` com `source.principals`
+
+
+#### `service-3` acessível externamente com JWT e isolado de outros serviços da malha
+
+
+#### Três cenários de JWT demonstrados para cada serviço externo
 
 ### Justificativa de decisões não triviais
 | Decisão                                | Justificativa |
@@ -236,6 +250,9 @@ k9s --kubeconfig shared/k3s.yaml
 | GitOps usando Fluxcd                   | Vejo GitOps como o estado da arte para administração de clusters Kubernetes, portanto optei demonstrar meu conhecimento utilizando a ferramenta que domino.|
 
 ### Descrição da métrica escolhida para o autoscaling
+O arquivo `apps\base\service-3\scaled-object.yaml` configura o KEDA para escalar o serviço 3 com
+base em requisições por segundo, considerando dados do último minuto.
+
 O script do k6 utilizado é o `k6.js`, presente na raiz do repositório e pode ser utilizado para
 forçar o scale-up do serviço 3 com o seguinte comando `JWT_TOKEN=seu_token k6 run test.js`
 ([como gerar o token](#como-gerar-o-token-jwt)).
@@ -273,4 +290,5 @@ cluster.
 > A estrutura de uma pasta *inquilina* também segue uma convenção, onde definimos uma pasta `base`
 > para tudo aquilo que será comum e uma outra pasta
 > para cada cluster onde o inquilino é aplicado. De tal modo que a pasta específica para o cluster
-> seja aplicada como uma camada acima da pasta `base`, dessa forma ela é capaz de sobrescrever configurações e atender qualquer especificidade daquele ambiente.
+> seja aplicada como uma camada acima da pasta `base`, dessa forma ela é capaz de sobrescrever
+> configurações e atender qualquer especificidade daquele ambiente.
