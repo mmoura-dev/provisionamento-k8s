@@ -73,6 +73,47 @@ Istio CA. Porém, a obrigatoriedade de comunicação mTLS no namespace é defini
   `cluster.local/ns/<namespace>/sa/<service-account>`.
 
 ### Como gerar o token JWT e como o JWKS foi configurado
+A ferramenta utilizada para gerar o JWKS e o JWT foi o
+[step-cli](https://smallstep.com/docs/step-cli/installation/).
+
+#### Como gerar o JWKS
+Gere os arquivos com as chaves pública e privada usando o seguinte comando:
+```
+step crypto jwk create jwk.pub.json jwk.json --kty EC --crv P-256 --use sig --alg ES256 --kid test-key
+```
+
+Transforme o arquivo para o formato comprimido:
+```pwsh
+$jwk = Get-Content jwk.pub.json -Raw | ConvertFrom-Json
+$jwks = @{ keys = @($jwk) } | ConvertTo-Json -Compress
+$jwks
+```
+```bash
+cat <<EOF > jwks.json
+{
+  "keys": [
+    $(cat jwk.pub.json)
+  ]
+}
+EOF
+JWKS=$(cat jwks.json | jq -c .)
+echo $JWKS
+```
+
+#### Como configurar a chave JWKS
+Por simplicidade, optei por configurar as chaves hardcoded nos yamls RequestAuthentication abaixo,
+mas tenho noção que em um ambiente de produção a escolha correta seria expor a chave via um servidor
+web.
+
+- `apps\base\service-1\request-authentication.yaml`
+- `apps\base\service-3\request-authentication.yaml`
+
+#### Como gerar o token JWT
+Pelo mesmo critério da última etapa, optei por usar a flag `--subtle` ao gerar o JWT, ao invés de
+configurar a flag de audiência.
+```
+step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --sub "user123" --kid test-key --subtle
+```
 
 ### Passo a passo reproduzível do zero (assumindo máquina limpa)
 
