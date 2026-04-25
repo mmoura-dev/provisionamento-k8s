@@ -210,7 +210,22 @@ k9s --kubeconfig shared/k3s.yaml
 
 ### Comandos de validação de cada critério de avaliação
 
-> Se estiver usando o VSCode, os testes xtensão "REST Client" no VSCode (humao.rest-client)
+Crie as seguintes variáveis de ambiente com token JWT a qual será utilizada no envio das requisições `curl` e um token inválido para testar a autorização.
+
+Windows:
+```pwsh
+$JWT_TOKEN="eyJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qta2V5IiwidHlwIjoiSldUIn0.eyJpYXQiOjE3NzY5NTEzMTcsImlzcyI6Imh0dHBzOi8vZGVzYWZpby1kZXZvcHMtcGxlbm8ucmlvIiwianRpIjoiNmUyYjNkMmQzNTNmZjM5N2Y1YjNhYzZiM2YxNDRiZTI5NDE0NzNjMjBhZWQ0MzA1OGJiNTAzN2IxYTUwYzQwOSIsIm5iZiI6MTc3Njk1MTMxNywic3ViIjoidXNlcjEyMyJ9.pTe_qj7njjnbU6I4rtDYxsIKOsZztFeA2OJkiC-mHTQwMHVEZ4BPTDqM0S1ANnvszULCTgM2HhN22GgjOB50LQ"
+$INVALID_JWT="eyJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qta2V5IiwidHlwIjoiSldUIn0.eyJpYXQiOjE3NzcxNDU1NTQsImlzcyI6Imh0dHBzOi8vZGVzYWZpby1kZXZvcHMtcGxlbm8ucmlvIiwianRpIjoiODQ2MTgzYTVlYmU1YmIxODQ5NTRhMTdkNDMxZjE5NWFlZTliMzE5ZWExNmIyMjVhMDRjY2IwOTE3YTM2ZjE1OCIsIm5iZiI6MTc3NzE0NTU1NCwic3ViIjoidXNlcjEyMyJ9.umqoxykh7YC2EjTTuxIPn3ZuXtJU9Ci840sGIJi_gYiM2zw1BdDvzX7EVFPYuxXDZ2nMkTzlgbaIxqmdq8StBA"
+```
+
+Linux:
+```bash
+export JWT_TOKEN="eyJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qta2V5IiwidHlwIjoiSldUIn0.eyJpYXQiOjE3NzY5NTEzMTcsImlzcyI6Imh0dHBzOi8vZGVzYWZpby1kZXZvcHMtcGxlbm8ucmlvIiwianRpIjoiNmUyYjNkMmQzNTNmZjM5N2Y1YjNhYzZiM2YxNDRiZTI5NDE0NzNjMjBhZWQ0MzA1OGJiNTAzN2IxYTUwYzQwOSIsIm5iZiI6MTc3Njk1MTMxNywic3ViIjoidXNlcjEyMyJ9.pTe_qj7njjnbU6I4rtDYxsIKOsZztFeA2OJkiC-mHTQwMHVEZ4BPTDqM0S1ANnvszULCTgM2HhN22GgjOB50LQ"
+export INVALID_JWT="eyJhbGciOiJFUzI1NiIsImtpZCI6InRlc3Qta2V5IiwidHlwIjoiSldUIn0.eyJpYXQiOjE3NzcxNDU1NTQsImlzcyI6Imh0dHBzOi8vZGVzYWZpby1kZXZvcHMtcGxlbm8ucmlvIiwianRpIjoiODQ2MTgzYTVlYmU1YmIxODQ5NTRhMTdkNDMxZjE5NWFlZTliMzE5ZWExNmIyMjVhMDRjY2IwOTE3YTM2ZjE1OCIsIm5iZiI6MTc3NzE0NTU1NCwic3ViIjoidXNlcjEyMyJ9.umqoxykh7YC2EjTTuxIPn3ZuXtJU9Ci840sGIJi_gYiM2zw1BdDvzX7EVFPYuxXDZ2nMkTzlgbaIxqmdq8StBA"
+```
+
+> No Windows a melhor maneira de usar `curl` é por meio do Git Bash, o qual é instalado junto com o
+> Git.
 
 #### Cluster funcional com os 3 nós em estado `Ready`
 Valide que os nós foram provisionados corretamente com o seguinte comando:
@@ -226,13 +241,73 @@ k3s-agent-2   Ready    <none>          75s     v1.34.6+k3s1
 k3s-cp-1      Ready    control-plane   3m16s   v1.34.6+k3s1
 ```
 
-#### `service-1` acessível externamente com JWT e roteando para `service-2` via mTLS
+#### `service-1` acessível externamente com JWT
+
+##### Requisição com JWT:
+```bash
+curl --request GET --url http://192.168.56.10/get --header "authorization: Bearer $JWT_TOKEN" --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 200 - OK
+
+##### Requisição com JWT inválido:
+```bash
+curl --request GET --url http://192.168.56.10/get --header "authorization: Bearer $INVALID_JWT" --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 401 - Unauthorized
+
+##### Requisição sem JWT:
+```bash
+curl --request GET --url http://192.168.56.10/get --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 403 - Forbidden
 
 
 #### `service-2` acessível apenas pelo `service-1` via `AuthorizationPolicy` com `source.principals`
 
+##### Requisição direta ao `service-2`:
+```bash
+curl --request GET --url http://192.168.56.10/get --header "authorization: Bearer $JWT_TOKEN" --header 'host: service-2.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 404 - Not Found
 
-#### `service-3` acessível externamente com JWT e isolado de outros serviços da malha
+##### Requisição ao `service-2` via proxy do `service-1`:
+```bash
+curl --request GET --url http://192.168.56.10/proxy/ --header "authorization: Bearer $JWT_TOKEN" --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 200 - OK
+
+##### Requisição ao `service-2` via proxy do `service-1` com JWT inválido:
+```bash
+curl --request GET --url http://192.168.56.10/proxy/ --header "authorization: Bearer $INVALID_JWT" --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 401 - Unauthorized
+
+##### Requisição ao `service-2` via proxy do `service-1` sem JWT:
+```bash
+curl --request GET --url http://192.168.56.10/proxy/ --header 'host: service-1.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 403 - Forbidden
+
+
+#### `service-3` acessível externamente com JWT
+
+##### Requisição com JWT:
+```bash
+curl --request GET --url http://192.168.56.10/get --header "authorization: Bearer $JWT_TOKEN" --header 'host: service-3.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 200 - OK
+
+##### Requisição com JWT inválido:
+```bash
+curl --request GET --url http://192.168.56.10/get --header "authorization: Bearer $INVALID_JWT" --header 'host: service-3.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 401 - Unauthorized
+
+##### Requisição sem JWT:
+```bash
+curl --request GET --url http://192.168.56.10/get --header 'host: service-3.example.com' -w "\n%{http_code}"
+```
+Código de saída esperado: 403 - Forbidden
 
 
 #### Três cenários de JWT demonstrados para cada serviço externo
@@ -254,8 +329,8 @@ O arquivo `apps\base\service-3\scaled-object.yaml` configura o KEDA para escalar
 base em requisições por segundo, considerando dados do último minuto.
 
 O script do k6 utilizado é o `k6.js`, presente na raiz do repositório e pode ser utilizado para
-forçar o scale-up do serviço 3 com o seguinte comando `JWT_TOKEN=seu_token k6 run test.js`
-([como gerar o token](#como-gerar-o-token-jwt)).
+forçar o scale-up do serviço 3 com o seguinte comando `k6 run k6.js`
+([crie uma variável de ambiente com o token JWT antes](#comandos-de-validação-de-cada-critério-de-avaliação)).
 
 
 ### Estrutura de um monorepositório FluxCD
