@@ -9,6 +9,7 @@ agents = { "k3s-agent-1" => "192.168.56.15",
 server_script = <<-SHELL
 
   export INSTALL_K3S_EXEC="--bind-address=#{server_ip} --node-ip=#{server_ip} --node-external-ip=#{server_ip} --flannel-iface=enp0s8 --disable=traefik"
+  export INSTALL_K3S_VERSION="v1.34.6+k3s1"
 
   curl -sfL https://get.k3s.io | sh -
 
@@ -34,6 +35,7 @@ agent_script = <<-SHELL
   export K3S_URL="https://#{server_ip}:6443"
   export K3S_TOKEN="$TOKEN"
   export INSTALL_K3S_EXEC="--node-ip=$(hostname -I | awk '{print $2}') --flannel-iface=enp0s8"
+  export INSTALL_K3S_VERSION="v1.34.6+k3s1"
 
   curl -sfL https://get.k3s.io | sh -
 SHELL
