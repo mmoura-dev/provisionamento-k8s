@@ -140,4 +140,6 @@ step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --s
 - respostas do nginx
 
 ### Descrição da métrica escolhida para o autoscaling
-Incluindo script k6 utilizado e demonstração do scale-up/down.
+O script do k6 utilizado é o `k6.js`, presente na raiz do repositório e pode ser utilizado para
+forçar o scale-up do serviço 3 com o seguinte comando `JWT_TOKEN=seu_token k6 run test.js`
+([como gerar o token](#como-gerar-o-token-jwt)).
