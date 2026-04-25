@@ -1,4 +1,4 @@
-# Quickstart — Cluster k3s Multi-Nó com Istio e JWT
+# Cluster k3s Multi-Nó com Istio e JWT
 
 ## Overview
 
