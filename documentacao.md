@@ -40,6 +40,27 @@ Nesse ponto apenas segui o especificado, três serviços, cada um no seu namespa
 
 
 #### Fluxo de Tráfego
+![Fluxograma das etapas que a malha de serviço realiza para validação, autenticação e autorização de
+requisições externas.](istio-flux.png)
+
+1. Primeiramente as requisições externas vão para o load balancer ingressgateway. O
+Gateway avalia o `Host:` header contra os `hosts` declarados no `gateway.yaml`. Se não houver match,
+a requisição é descartada com 404 antes de qualquer outra checagem.
+
+2. Depois os VirtualServices (`virtual-service.yaml`) define para onde o tráfego vai, dado um 
+conjunto de hosts, destine o tráfego para tais serviços.
+
+3. O RequestAuthentication (`request-authorization.yaml`) é a próxima etapa, a qual se token JWT da
+requisição é válido, neste caso usando o JWKS para verificar a assinatura.
+
+4. AuthorizationPolicy (`authorization-policy.yaml`) define os critérios para autorizar a
+requisição. Por exemplo, para comunicação externa definimos que os serviços 1 e 3 precisam que os 
+JWT sejam issue pelo domínio `https://desafio-devops-pleno.rio/*`.
+
+5. Por fim, o DestinationRule (`destination-rule.yaml`) define como a comunicação entre os proxies
+Envoy são feitas, incluindo o modo TLS. O ISTIO_MUTUAL ativa o mTLS com o certificado emitido pelo
+Istio CA. Porém, a obrigatoriedade de comunicação mTLS no namespace é definida no PeerAuthentication
+(`peer-authentication.yaml`).
 
 #### Políticas Aplicadas
 
