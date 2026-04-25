@@ -133,11 +133,15 @@ step crypto jwt sign --key jwk.json --iss "https://desafio-devops-pleno.rio" --s
 | Organização do repositório                                                                      | Médio |
 
 ### Justificativa de decisões não triviais
-- versão do k3s
-- CNI
-- escopo do PeerAuthentication
-- algoritmo JWT
-- respostas do nginx
+| Decisão                                | Justificativa |
+|----------------------------------------|---------------|
+| k3s versão `v1.34.6+k3s1`              | Deixei o instalador livre para escolher a versão mais recente ao criar o cluster, para ter o máximo de tempo possível com uma versão em linha. |
+| CNI padrão do k3s (Flannel)            | A menos que houvesse incompatibilidade, não havia necessidade de CNI customizado. |
+| `PeerAuthentication` por namespace     | Garante STRICT em todo o namespace sem exceção por porta ou workload, conforme requisito. |
+| Algoritmo ECDSA P-256 para JWT         | Acredito que algoritmos de curvas elípticas sejam o estado da arte para assinaturas digitais. |
+| JWKS inline no `RequestAuthentication` | Elimina dependência de servidor de identidade externo, adequado para ambiente volátil. |
+| `httpbin` e `nginx` para os serviços   | Acatei o `httpbin` por simplicidade, mas também precisei usar o `nginx` para fazer o proxy entre o serviço 1 e 2 com mTLS e porque ele tem um helm chart popular para atender o requisito de serviço 2. |
+| `ServiceAccount` nomeada por serviço   | Necessária para `source.principals` únicos. |
 
 ### Descrição da métrica escolhida para o autoscaling
 O script do k6 utilizado é o `k6.js`, presente na raiz do repositório e pode ser utilizado para
